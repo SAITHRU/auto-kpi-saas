@@ -4,20 +4,20 @@ import numpy as np
 from prophet import Prophet
 
 def auto_clean(df):
+    corrections = []
     if df is None or df.empty:
         st.error("❌ El archivo está vacío o no se pudo leer correctamente.")
-        return pd.DataFrame()
+        return pd.DataFrame(), corrections
 
-    resumen = []
     for col in df.columns:
         vacíos = df[col].isnull().sum()
         if vacíos > 0:
-            resumen.append({"Columna": col, "Valores vacíos": vacíos})
+            corrections.append({"Columna": col, "Corrección": f"{vacíos} valores vacíos rellenados"})
         if df[col].dtype == 'object':
             try:
                 pd.to_numeric(df[col])
             except Exception:
-                resumen.append({"Columna": col, "Valores vacíos": "Texto no numérico"})
+                corrections.append({"Columna": col, "Corrección": "Texto no numérico detectado"})
 
     df = df.replace(['N/A', 'null', 'NaN', '', 'None'], np.nan)
     try:
@@ -26,23 +26,23 @@ def auto_clean(df):
         st.warning("⚠️ No se pudo aplicar relleno automático. Se mantiene el formato original.")
         df = df.fillna(0)
 
-    if resumen:
-        st.subheader("🧹 Resumen de limpieza de datos")
-        resumen_df = pd.DataFrame(resumen)
-        st.dataframe(resumen_df, use_container_width=True)
-        st.info("Estos valores fueron corregidos o requieren revisión para mejorar los KPIs.")
-
-    return df
+    return df, corrections
 
 def kpi_cards(df):
-    st.metric("Número de registros", len(df))
-    if df.select_dtypes(include=np.number).shape[1] > 0:
-        st.metric("Promedio KPI", round(df.select_dtypes(include=np.number).mean().mean(), 2))
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("👥 Empleados activos", len(df))
+    with col2:
+        st.metric("💵 Total salarios", f"${df.select_dtypes(include=np.number).sum().sum():,.0f}")
+    with col3:
+        st.metric("📊 Columnas analizadas", len(df.columns))
 
 def forecast(df):
     if df.shape[1] >= 2:
         try:
             df_forecast = df[[df.columns[0], df.columns[1]]].rename(columns={df.columns[0]: "ds", df.columns[1]: "y"})
+            df_forecast["ds"] = pd.to_datetime(df_forecast["ds"], errors="coerce")
+            df_forecast = df_forecast.dropna(subset=["ds"])
             model = Prophet()
             model.fit(df_forecast)
             future = model.make_future_dataframe(periods=30)
@@ -51,5 +51,18 @@ def forecast(df):
         except Exception as e:
             st.error(f"No se pudo generar la predicción: {e}")
 
+def suggest_kpis(df):
+    suggestions = []
+    num_cols = df.select_dtypes(include=np.number).columns
+    for col in num_cols:
+        mean_val = df[col].mean()
+        suggestions.append({
+            "KPI sugerido": col,
+            "Promedio": round(mean_val, 2),
+            "Impacto estimado": "Moderado" if mean_val < df[col].max() / 2 else "Alto"
+        })
+    return suggestions
+
 def connect_db():
     st.info("🔑 Configura tus credenciales en Secrets para conectar bases de datos.")
+
