@@ -1,64 +1,46 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
-from sqlalchemy import create_engine
-import os
-import streamlit as st
-import plotly.express as px
+from prophet import Prophet
 
-def connect_db(db_type):
-    uri = os.getenv(db_type.upper().replace(" ","")+"_URI")
-    if not uri:
-        st.error(f"No hay URI configurada para {db_type}")
-        return None
-    try:
-        engine = create_engine(uri)
-        return engine
-    except Exception as e:
-        st.error(f"Error conectando a {db_type}: {e}")
-        return None
+def auto_clean(df):
+    issues = []
+    for col in df.columns:
+        if df[col].isnull().sum() > 0:
+            issues.append(f"Columna '{col}' tiene {df[col].isnull().sum()} valores vacíos.")
+        if df[col].dtype == 'object':
+            try:
+                pd.to_numeric(df[col])
+            except Exception:
+                issues.append(f"Columna '{col}' contiene texto no numérico.")
 
-def auto_clean(df, mode="auto"):
-    df2 = df.copy()
-    df2.columns = [str(c).strip() for c in df2.columns]
-    date_col = None
-    for col in df2.columns:
+    if issues:
+        st.warning("⚠️ Se detectaron posibles problemas en el archivo:")
+        for i in issues:
+            st.write("-", i)
+        st.info("Por favor, completa los datos faltantes para mejorar el cálculo de KPIs.")
+
+    df = df.replace(['N/A', 'null', 'NaN', ''], np.nan)
+    df = df.fillna(method='ffill').fillna(method='bfill')
+    return df
+
+def kpi_cards(df):
+    st.metric("Número de registros", len(df))
+    if df.select_dtypes(include=np.number).shape[1] > 0:
+        st.metric("Promedio KPI", round(df.select_dtypes(include=np.number).mean().mean(), 2))
+
+def forecast(df):
+    if df.shape[1] >= 2:
         try:
-            parsed = pd.to_datetime(df2[col], errors="coerce")
-            if parsed.notna().sum() / len(parsed) > 0.35:
-                date_col = col
-                df2[col] = parsed
-                break
-        except:
-            continue
-    for c in df2.columns:
-        df2[c] = pd.to_numeric(df2[c], errors="ignore")
-    if mode == "auto":
-        df2 = df2.dropna(how="all")
-    return df2, date_col
+            df_forecast = df[[df.columns[0], df.columns[1]]].rename(columns={df.columns[0]: "ds", df.columns[1]: "y"})
+            model = Prophet()
+            model.fit(df_forecast)
+            future = model.make_future_dataframe(periods=30)
+            forecast = model.predict(future)
+            st.line_chart(forecast[["ds", "yhat"]].set_index("ds"))
+        except Exception as e:
+            st.error(f"No se pudo generar la predicción: {e}")
 
-def kpi_cards(df, kpi):
-    series = pd.to_numeric(df[kpi], errors="coerce").dropna()
-    if series.empty:
-        st.warning("No hay datos válidos para KPI seleccionado")
-        return
-    latest = series.iloc[-1]
-    avg30 = series.tail(30).mean()
-    change = (latest - avg30) / (avg30 + 1e-9)
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Valor actual", f"{latest:,.0f}")
-    c2.metric("Promedio (últ. 30)", f"{avg30:,.0f}")
-    c3.metric("Cambio vs promedio", f"{change*100:+.1f}%")
+def connect_db():
+    st.info("🔑 Configura tus credenciales en Secrets para conectar bases de datos.")
 
-def forecast(df, date_col, kpi):
-    try:
-        model_df = df[[date_col, kpi]].dropna().rename(columns={date_col:"ds", kpi:"y"})
-        from prophet import Prophet
-        m = Prophet()
-        m.fit(model_df)
-        future = m.make_future_dataframe(periods=30)
-        forecast = m.predict(future)
-        fig = px.line(forecast, x="ds", y="yhat", title=f"Predicción 30 días — {kpi}", markers=True,
-                      template="plotly_dark", color_discrete_sequence=["#ff006e"])
-        st.plotly_chart(fig, use_container_width=True)
-    except Exception as e:
-        st.error(f"No se pudo generar predicción: {e}")
