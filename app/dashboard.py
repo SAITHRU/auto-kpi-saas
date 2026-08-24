@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from utils import auto_clean, kpi_cards, forecast, connect_db, suggest_kpis
+from utils import auto_clean, kpi_cards, forecast, connect_db, suggest_kpis, strategy_ai
 import plotly.express as px
 from prophet import Prophet
 
@@ -84,4 +84,23 @@ if uploaded_file:
             columns={df.columns[0]: "ds", df.select_dtypes(include=np.number).columns[0]: "y"})
         df_forecast["ds"] = pd.to_datetime(df_forecast["ds"], errors="coerce")
         df_forecast = df_forecast.dropna(subset=["ds"])
-        model
+        model = Prophet()
+        model.fit(df_forecast)
+        future = model.make_future_dataframe(periods=30)
+        forecast = model.predict(future)
+        fig_forecast = px.line(forecast, x="ds", y="yhat", title="Predicción de tendencia 30 días")
+        fig_forecast.update_layout(template="plotly_dark",
+                                   plot_bgcolor="rgba(0,0,0,0)",
+                                   paper_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig_forecast, use_container_width=True)
+        st.success("✅ Predicción generada correctamente.")
+    except Exception as e:
+        st.error(f"No se pudo generar la predicción: {e}")
+
+    # Estrategia automática
+    st.subheader("🧠 Estrategia sugerida por IA")
+    strategy_text = strategy_ai(df)
+    st.write(strategy_text)
+
+else:
+    st.info("Sube un archivo para comenzar el análisis.")
