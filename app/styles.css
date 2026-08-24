@@ -1,16 +1,19 @@
 body {
-  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  background: radial-gradient(circle at top left, #0f0f0f, #1a1a1a);
   color: #e0e0e0;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-.block-container {
+[data-testid="stMetricValue"] {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 20px;
   backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  transition: transform 0.3s ease;
 }
 
-h1, h2, h3 {
-  color: #00f5d4;
-  text-shadow: 0 0 10px rgba(0,245,212,0.7);
+[data-testid="stMetricValue"]:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
 }
