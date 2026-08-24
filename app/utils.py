@@ -66,4 +66,3 @@ def strategy_ai(df):
 
 def connect_db():
     st.info("🔑 Configura tus credenciales en Secrets para conectar bases de datos.")
-
