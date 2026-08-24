@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from utils import auto_clean, kpi_cards, forecast, connect_db, suggest_kpis, strategy_ai
+from app.utils import auto_clean, kpi_cards, forecast, connect_db, suggest_kpis, strategy_ai
+
 import plotly.express as px
 from prophet import Prophet
 
