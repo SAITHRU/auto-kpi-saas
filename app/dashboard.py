@@ -6,7 +6,7 @@ from prophet import Prophet
 from sqlalchemy import create_engine
 import os
 from dotenv import load_dotenv
-from app.utils import auto_clean, kpi_cards, forecast, connect_db
+from utils import auto_clean, kpi_cards, forecast, connect_db
 
 st.set_page_config(page_title="Auto KPI SaaS v2", layout="wide")
 
