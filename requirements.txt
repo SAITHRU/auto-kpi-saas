@@ -4,9 +4,4 @@ numpy
 plotly
 prophet
 sqlalchemy
-psycopg2-binary
-mysqlclient
-pyodbc
-google-api-python-client
-onedrivesdk
 python-dotenv
