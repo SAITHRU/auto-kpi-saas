@@ -30,6 +30,7 @@ def auto_clean(df):
         st.subheader("🧹 Resumen de limpieza de datos")
         resumen_df = pd.DataFrame(resumen)
         st.dataframe(resumen_df, use_container_width=True)
+        st.info("Estos valores fueron corregidos o requieren revisión para mejorar los KPIs.")
 
     return df
 
