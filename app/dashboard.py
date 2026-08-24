@@ -25,22 +25,19 @@ if uploaded_file:
             st.dataframe(pd.DataFrame(corrections), use_container_width=True)
             st.info("Haz clic en cada fila para autorizar o revertir la corrección manualmente.")
 
-    # KPIs principales
     st.subheader("💎 KPIs holográficos")
     kpi_cards(df)
 
-    # Sugerencias IA
     st.subheader("🤖 Sugerencias automáticas de KPIs")
     suggested = suggest_kpis(df)
     st.dataframe(pd.DataFrame(suggested), use_container_width=True)
 
-    # Layout lateral tipo Power BI
     st.subheader("📊 Análisis estratégico")
     num_cols = df.select_dtypes(include=np.number).columns
     cat_cols = df.select_dtypes(exclude=np.number).columns
 
     if len(num_cols) > 0:
-        for col in num_cols[:3]:  # máximo 3 KPIs para claridad
+        for col in num_cols[:3]:
             st.markdown(f"### 🔹 {col}")
             left, right = st.columns([2, 1])
 
@@ -67,7 +64,6 @@ if uploaded_file:
                 st.metric("⚖️ Promedio", round(avg_val, 2))
                 st.info(f"💡 La IA sugiere revisar el KPI **{col}**: su variación indica oportunidad de mejora.")
 
-    # Comparativa general
     st.subheader("📊 Comparativa entre KPIs")
     if len(num_cols) > 1:
         comp_df = df[num_cols]
@@ -77,7 +73,6 @@ if uploaded_file:
                                paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_comp, use_container_width=True)
 
-    # Predicción 30 días
     st.subheader("🔮 Predicción 30 días")
     try:
         df_forecast = df[[df.columns[0], df.select_dtypes(include=np.number).columns[0]]].rename(
@@ -97,10 +92,10 @@ if uploaded_file:
     except Exception as e:
         st.error(f"No se pudo generar la predicción: {e}")
 
-    # Estrategia automática
     st.subheader("🧠 Estrategia sugerida por IA")
     strategy_text = strategy_ai(df)
     st.write(strategy_text)
 
 else:
     st.info("Sube un archivo para comenzar el análisis.")
+
