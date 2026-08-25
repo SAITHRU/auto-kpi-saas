@@ -13,11 +13,14 @@ def auto_clean(df):
         vacíos = df[col].isnull().sum()
         if vacíos > 0:
             corrections.append({"Columna": col, "Corrección": f"{vacíos} valores vacíos rellenados"})
+    df = df.replace(['N/A', 'null', 'NaN', '', 'None'], np.nan)
     df = df.fillna(method='ffill').fillna(method='bfill')
     return df, corrections
 
 def analyze_business(df):
     num_cols = df.select_dtypes(include=np.number).columns
+    if len(num_cols) == 0:
+        return "⚠️ No se encontraron KPIs numéricos para análisis."
     avg = df[num_cols].mean().mean()
     dispersion = df[num_cols].std().mean()
     if avg < dispersion:
@@ -34,29 +37,41 @@ def executive_summary(df):
     resumen = []
     resumen.append("📑 **Resumen Ejecutivo**")
     resumen.append(f"- Se analizaron {len(df)} registros con {len(df.columns)} variables.")
-    resumen.append(f"- El rendimiento promedio de los KPIs numéricos es {round(df[num_cols].mean().mean(),2)}.")
-    resumen.append(f"- La variabilidad promedio es {round(df[num_cols].std().mean(),2)}.")
-    resumen.append("💡 Recomendación general: priorizar automatización, control de riesgos y expansión en áreas de alto desempeño.")
+    if len(num_cols) > 0:
+        resumen.append(f"- Rendimiento promedio de KPIs numéricos: {round(df[num_cols].mean().mean(),2)}.")
+        resumen.append(f"- Variabilidad promedio: {round(df[num_cols].std().mean(),2)}.")
+    resumen.append("💡 Recomendación: priorizar automatización, control de riesgos y expansión en áreas de alto desempeño.")
     return "\n".join(resumen)
 
 def generate_kpi(df, name):
     num_cols = df.select_dtypes(include=np.number).columns
+    if len(num_cols) == 0:
+        return f"{name} = No se encontraron datos numéricos", go.Figure()
     formula = f"{name} = promedio({num_cols[0]}) / total_registros"
-    # Selección automática de gráfico
-    if len(num_cols) > 1:
+    # Selección automática de gráfico según columnas
+    if len(num_cols) >= 2:
         chart = px.scatter(df, x=num_cols[0], y=num_cols[1], title=f"KPI generado: {name}")
-    else:
+    elif len(num_cols) == 1:
         chart = go.Figure(go.Indicator(
             mode="gauge+number",
             value=df[num_cols[0]].mean(),
             title={"text": f"KPI generado: {name}"},
             gauge={"axis": {"range": [None, df[num_cols[0]].max()]},
-                   "bar": {"color": "cyan"}}))
+                   "bar": {"color": "cyan"},
+                   "steps": [
+                       {"range": [0, df[num_cols[0]].mean()/2], "color": "red"},
+                       {"range": [df[num_cols[0]].mean()/2, df[num_cols[0]].mean()], "color": "yellow"},
+                       {"range": [df[num_cols[0]].mean(), df[num_cols[0]].max()], "color": "green"}]}))
+    else:
+        chart = px.histogram(df, title=f"KPI generado: {name}")
     return formula, chart
 
 def predict_future(df):
-    df_forecast = df[[df.columns[0], df.select_dtypes(include=np.number).columns[0]]].rename(
-        columns={df.columns[0]: "ds", df.select_dtypes(include=np.number).columns[0]: "y"})
+    num_cols = df.select_dtypes(include=np.number).columns
+    if len(num_cols) == 0:
+        return go.Figure()
+    df_forecast = df[[df.columns[0], num_cols[0]]].rename(
+        columns={df.columns[0]: "ds", num_cols[0]: "y"})
     df_forecast["ds"] = pd.to_datetime(df_forecast["ds"], errors="coerce")
     df_forecast = df_forecast.dropna(subset=["ds"])
     model = Prophet()
@@ -75,14 +90,4 @@ def decision_ai(df):
         avg_val = df[col].mean()
         max_val = df[col].max()
         if avg_val < max_val * 0.4:
-            insights.append(f"🔴 **{col}** crítico → reasignar recursos y revisar procesos.")
-        elif avg_val < max_val * 0.7:
-            insights.append(f"🟠 **{col}** en riesgo → implementar control preventivo y optimizar flujo.")
-        else:
-            insights.append(f"🟢 **{col}** estable → mantener estrategia y explorar expansión.")
-    insights.append("📊 Proyección: mejorar rendimiento promedio en 10 % → margen operativo +3 % a +5 %.")
-    insights.append("✅ Acción recomendada: automatizar validaciones y reforzar control de sanciones.")
-    return "\n".join(insights)
-
-def connect_db():
-    st.info("🔑 Configura tus credenciales en Secrets para conectar bases de datos.")
+            insights.append(f"🔴 **{col}** crítico → reasignar recursos
