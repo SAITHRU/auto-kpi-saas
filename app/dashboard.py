@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(__file__))
 import streamlit as st
 import pandas as pd
 import numpy as np
-from utils import auto_clean, connect_db, generate_kpi, analyze_business, predict_future, decision_ai, executive_summary
+from utils import auto_clean, connect_db, generate_kpi, analyze_business, predict_future, decision_ai
 import plotly.express as px
 
 st.set_page_config(page_title="Panel estratégico de decisiones", layout="wide")
@@ -24,9 +24,6 @@ if uploaded_file:
 
     st.subheader("📈 Análisis ejecutivo")
     st.markdown(analyze_business(df))
-
-    st.subheader("📑 Resumen ejecutivo")
-    st.markdown(executive_summary(df))
 
     st.subheader("🎯 KPIs estratégicos")
     new_kpi = st.text_input("Escribe el KPI que deseas crear (ejemplo: 'Satisfacción del cliente')")
