@@ -16,7 +16,6 @@ from utils import (
     decision_ai,
     executive_summary
 )
-
 # Configuración inicial
 st.set_page_config(page_title="Panel estratégico de decisiones", layout="wide")
 
