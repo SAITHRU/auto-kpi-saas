@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
-# ✅ Importar funciones desde utils.py en una sola línea
+# ✅ Importar funciones desde utils.py
 from utils import auto_clean, connect_db, generate_kpi, analyze_business, predict_future, decision_ai, executive_summary
 
 # Configuración inicial
@@ -62,4 +62,3 @@ if uploaded_file:
 
 else:
     st.info("Sube un archivo para comenzar el análisis.")
-
