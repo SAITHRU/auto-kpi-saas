@@ -4,6 +4,9 @@ sys.path.append(os.path.dirname(__file__))
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.express as px
+
+# Importar funciones desde utils.py
 from utils import (
     auto_clean,
     connect_db,
@@ -13,7 +16,6 @@ from utils import (
     decision_ai,
     executive_summary
 )
-import plotly.express as px
 
 # Configuración inicial
 st.set_page_config(page_title="Panel estratégico de decisiones", layout="wide")
@@ -68,4 +70,5 @@ if uploaded_file:
 
 else:
     st.info("Sube un archivo para comenzar el análisis.")
+
 
