@@ -94,3 +94,7 @@ if uploaded_file:
 else:
     st.info("Sube un archivo para comenzar el análisis.")
 
+    st.subheader("🧭 Decisiones sugeridas por IA")
+    from utils import decision_ai
+    decisions = decision_ai(df)
+    st.markdown(decisions)
