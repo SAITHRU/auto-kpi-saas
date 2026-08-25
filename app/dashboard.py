@@ -4,10 +4,11 @@ sys.path.append(os.path.dirname(__file__))
 import streamlit as st
 import pandas as pd
 import numpy as np
-from utils import auto_clean, connect_db, generate_kpi, analyze_business, predict_future, decision_ai
+from utils import auto_clean, connect_db, generate_kpi, analyze_business, predict_future
 import plotly.express as px
+from prophet import Prophet
 
-st.set_page_config(page_title="Panel estratégico de decisiones", layout="wide")
+st.set_page_config(page_title="Auto KPI SaaS v5", layout="wide")
 
 st.title("🧠 Consultor Digital Autónomo")
 st.caption("Sistema experto que analiza, predice y recomienda estrategias empresariales sin intervención humana.")
@@ -26,6 +27,11 @@ if uploaded_file:
     st.markdown(analyze_business(df))
 
     st.subheader("🎯 KPIs estratégicos")
+    kpi_list = ["Rentabilidad", "Eficiencia operativa", "Cumplimiento legal"]
+    for kpi in kpi_list:
+        st.metric(kpi, round(df.select_dtypes(include=np.number).mean().mean(), 2))
+
+    st.subheader("⚙️ Generador de KPIs personalizados")
     new_kpi = st.text_input("Escribe el KPI que deseas crear (ejemplo: 'Satisfacción del cliente')")
     if new_kpi:
         formula, chart = generate_kpi(df, new_kpi)
@@ -39,10 +45,5 @@ if uploaded_file:
     except Exception as e:
         st.error(f"No se pudo generar la predicción: {e}")
 
-    st.subheader("🧭 Decisiones sugeridas por IA")
-    decisions = decision_ai(df)
-    st.markdown(decisions)
-
 else:
     st.info("Sube un archivo para comenzar el análisis.")
-
