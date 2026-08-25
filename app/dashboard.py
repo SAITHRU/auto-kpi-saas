@@ -70,5 +70,3 @@ if uploaded_file:
 
 else:
     st.info("Sube un archivo para comenzar el análisis.")
-
-
